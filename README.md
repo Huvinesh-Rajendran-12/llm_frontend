@@ -1,24 +1,31 @@
-# README
+# LLM Frontend
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+## Project Overview 
+This project is a frontend application for an AI-powered chatbot, leveraging large language models (LLMs) to provide intelligent responses. It's built using Rails 7 and integrates with a backend service to process user queries and generate responses.
 
-Things you may want to cover:
+## Features 
+* Real-time chat interface.
+* Enhanced performance with Rails 7.
+* Integration with any LLM backend server with the right format.
 
-* Ruby version
+## Tech Stack
+* Ruby on Rails 7
+* Javascript for dynamic interactions
+* Tailwind CSS
+* Alibaba Qwen model
 
-* System dependencies
+## Setup and Installation
+1. Clone the repository.
+```bash
+git clone https://github.com/Huvinesh-Rajendran-12/llm_frontend.git
+```
 
-* Configuration
+2. Install dependencies
+```bash
+bunlde install
+```
 
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+3. Start the server
+```bash
+rails server
+```
