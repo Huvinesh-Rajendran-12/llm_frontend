@@ -1,19 +1,63 @@
 <!-- app/views/chatbot/index.html.erb -->
-<div class="flex flex-col h-screen bg-gradient-to-r from-blue-900 to-teal-800 p-4">
-  <h1 class="text-2xl font-bold text-white mb-4">Teleme Health Agent</h1>
-
-  <div class="flex-1 bg-white bg-opacity-10 rounded-lg overflow-hidden flex flex-col">
-    <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-4">
-      <%= turbo_stream_from "chatbot" %>
-      <!-- Messages will be inserted here -->
-    </div>
-
-    <!-- Input area -->
-    <%= form_with(url: send_message_path, method: :post, class: "p-4 bg-white bg-opacity-5", data: { controller: "chat", action: "submit->chat#sendMessage" }) do |f| %>
-      <div class="flex space-x-2">
-        <%= f.text_field :message, id: 'message-input', autocomplete: 'off', placeholder: "Type your message here...", class: "flex-1 bg-white bg-opacity-20 text-white placeholder-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" %>
-        <%= f.button 'Send', type: 'submit', class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500" %>
-      </div>
+<div class="min-h-screen bg-gradient-to-br from-teal-400 to-teal-600 flex flex-col p-4">
+  <h1 class="text-4xl font-bold text-white mb-6 text-center">LLM Chatbot</h1>
+  <div id="chat-container" class="flex-grow bg-white bg-opacity-10 backdrop-blur-lg rounded-lg shadow-xl p-4 flex flex-col">
+    <div id="chat-messages" class="flex-grow space-y-4 overflow-y-auto mb-4"></div>
+    <%= form_with(url: send_message_path, method: :post, data: { remote: true }, class: "flex items-center space-x-2") do |f| %>
+      <%= f.text_field :message, placeholder: "Ask a question...", class: "flex-grow p-3 rounded-full bg-white bg-opacity-20 text-white placeholder-teal-200 focus:outline-none focus:ring-2 focus:ring-white" %>
+      <%= f.button type: "submit", class: "p-3 rounded-full bg-teal-500 text-white hover:bg-teal-400 focus:outline-none focus:ring-2 focus:ring-white" do %>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+        </svg>
+      <% end %>
     <% end %>
   </div>
 </div>
+
+<%= javascript_include_tag "channels/chatbot_channel" %>
+
+<script>
+document.addEventListener("turbo:load", function() {
+  const chatMessages = document.getElementById("chat-messages");
+  const form = document.querySelector("form");
+
+  form.addEventListener("submit", function(event) {
+    event.preventDefault();
+    const message = event.target.elements.message.value;
+
+    addMessageToChat('user', message);
+    event.target.elements.message.value = '';
+
+    fetch('<%= send_message_path %>', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+      },
+      body: JSON.stringify({ message: message })
+    });
+  });
+
+  function addMessageToChat(sender, message) {
+    const messageElement = document.createElement('div');
+    messageElement.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+    messageElement.innerHTML = `
+      <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${sender === 'user' ? 'bg-teal-500 text-white' : 'bg-white bg-opacity-20 text-white'}">
+        <p>${message}</p>
+      </div>
+    `;
+    chatMessages.appendChild(messageElement);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  App.chatbot = App.cable.subscriptions.create("ChatbotChannel", {
+    received(data) {
+      if (data.sender === 'llm') {
+        if (!data.is_last) {
+          addMessageToChat('llm', data.message);
+        }
+      }
+    }
+  });
+});
+</script>
